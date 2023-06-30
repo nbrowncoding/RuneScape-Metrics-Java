@@ -17,20 +17,55 @@ public class CombatLevelCalculator {
      * @param levelMap A key pair of stat name and level
      * @return Map - The combat level for Melee, Range, Magic, and Overall
      */
-    public static Map<String, Integer> calculateR3CombatLevel(Map<String, Integer> levelMap) {
+    public static Map<String, Integer> calculateRS3CombatLevel(Map<String, Integer> levelMap) {
+
+        /* TESTING STATS
+         * ATT  = 51
+         * STR  = 50
+         * DEF  = 50
+         * RNG  = 26
+         * MAG  = 37
+         * HP   = 47
+         * PRAY = 40
+         * SUMM = 11
+         *
+         * Expected output: {Magic=54, Combat=63, Melee=63, Range=47}
+         *
+         * Last Test: PASS
+         */
 
         // Set the level values here to make the equations more readable
         int att = levelMap.get("ATT");
         int str = levelMap.get("STR");
-        int def = levelMap.get("STR");
-        int rng = levelMap.get("STR");
-        int mag = levelMap.get("STR");
-        int hp = levelMap.get("STR");
-        int pray = levelMap.get("STR");
+        int def = levelMap.get("DEF");
+        int rng = levelMap.get("RNG");
+        int mag = levelMap.get("MAG");
+        int hp = levelMap.get("HP");
+        int pray = levelMap.get("PRAY");
         int summ = levelMap.get("SUMM");
 
-        int combatLevel = (int) Math.floor(levelMap.get("ATT") + levelMap.get("STR"));
-        return null;
+        // Calculate the base (Def, HP, and Prayer)
+        double base = (Math.floor(pray*0.5) + Math.floor(summ*0.5) + def + hp);
+
+        // Calculate Melee
+        int melee = (int) Math.floor(((att + str) * 1.3 + base) / 4);
+
+        // Calculate Range
+        int range = (int) Math.floor(((2 * rng) * 1.3 + base) / 4);
+
+        // Calculate Magic
+        int magic = (int) Math.floor(((2 * mag) * 1.3 + base) / 4);
+
+        // Overall Level (max of melee, range, and magic)
+        int overall = Math.max(magic, Math.max(range, melee));
+
+        Map<String, Integer> combatLevels = new HashMap<>();
+        combatLevels.put("Melee", melee);
+        combatLevels.put("Range", range);
+        combatLevels.put("Magic", magic);
+        combatLevels.put("Combat", overall);
+
+        return combatLevels;
     }
 
     /**
@@ -39,6 +74,20 @@ public class CombatLevelCalculator {
      * @return Map - The combat level for Melee, Range, Magic, and Overall
      */
     public static Map<String, Integer> calculateOSRSCombatLevel(Map<String, Integer> levelMap) {
+
+        /* TESTING STATS
+         * ATT  = 25
+         * STR  = 25
+         * DEF  = 24
+         * RNG  = 26
+         * MAG  = 30
+         * HP   = 30
+         * PRAY = 26
+         *
+         * Expected output: {Magic=31, Combat=32, Melee=32, Range=29}
+         *
+         * Last Test: FAIL
+         */
 
         // Set the level values here to make the equations more readable
         int att = levelMap.get("ATT");
@@ -59,7 +108,7 @@ public class CombatLevelCalculator {
         int range = (int) Math.floor((Math.floor(rng/2.0) + rng) * 0.325 + base);
 
         // Calculate Magic
-        int magic = (int) Math.floor ((Math.floor(mag/2.0) + mag) * 0.325 + base);
+        int magic = (int) Math.floor((Math.floor(mag/2.0) + mag) * 0.325 + base);
 
         // Overall Level (max of melee, range, and magic)
         int overall = Math.max(magic, Math.max(range, melee));
@@ -85,12 +134,12 @@ public class CombatLevelCalculator {
         System.out.println("RuneScape Combat Level Calculator 1.0\n");
 
         // Get the RS version
-        System.out.print("RuneScape Version (R3 or OSRS)?");
+        System.out.print("RuneScape Version (RS3 or OSRS)?");
         String rsVersion = uInput.nextLine();
         System.out.print("\n");
 
         // Check is user entered acceptable RuneScape Version
-        if(!rsVersion.equals("R3")&&!rsVersion.equals("OSRS")) {
+        if(!rsVersion.equals("RS3")&&!rsVersion.equals("OSRS")) {
 
             // Return error to user
             System.out.println("Invalid RuneScape Version!");
@@ -139,18 +188,14 @@ public class CombatLevelCalculator {
             characterStats.put("PRAY", uInput.nextInt());
             System.out.println();
 
+            // Create Map for that stores the calculated combat levels
+            Map<String, Integer> combatLevels;
+
             // If OSRS, then calculate combat level
             if(rsVersion.equals("OSRS")) {
 
                 // Get Combat Levels
-                Map<String, Integer> combatLevels = calculateOSRSCombatLevel(characterStats);
-
-                // Show player name and combat levels
-                System.out.println(characterName + "'s Combat Level is: " + combatLevels.get("Combat"));
-                System.out.println("Melee: " + combatLevels.get("Melee"));
-                System.out.println("Range: " + combatLevels.get("Range"));
-                System.out.println("Magic: " + combatLevels.get("Magic"));
-                System.exit(0);
+                combatLevels = calculateOSRSCombatLevel(characterStats);
             }
             else {
 
@@ -159,11 +204,16 @@ public class CombatLevelCalculator {
                 characterStats.put("SUMM", uInput.nextInt());
                 System.out.println();
 
-                // Show player name and combat level
-                System.out.print(characterName + "'s Combat Level is: ");
-                System.out.println(calculateR3CombatLevel(characterStats));
-                System.exit(0);
+                // Get Combat Levels
+                combatLevels = calculateRS3CombatLevel(characterStats);
             }
+
+            // Show player name and combat levels
+            System.out.println(characterName + "'s Combat Level is: " + combatLevels.get("Combat"));
+            System.out.println("Melee: " + combatLevels.get("Melee"));
+            System.out.println("Range: " + combatLevels.get("Range"));
+            System.out.println("Magic: " + combatLevels.get("Magic"));
+            System.exit(0);
         }
         catch (Exception e) {
             // Show stack trace
